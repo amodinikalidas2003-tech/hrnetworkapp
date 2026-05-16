@@ -35,23 +35,15 @@ DEBUG = os.environ.get("DEBUG", 'True').lower() in ['true', 'yes', '1']
 
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,0.0.0.0,127.0.0.1").split(",")
 
 # Current DJANGO_ENVIRONMENT
 ENVIRONMENT = os.environ.get("DJANGO_ENVIRONMENT", default="local")
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-    'http://127.0.0.1:13926', # Cascade proxy port (old)
-    'http://127.0.0.1:13194', # Cascade proxy port (current)
-    'http://127.0.0.1:51073', # Cascade proxy port (new)
-    'http://127.0.0.1:51074',
-    'http://127.0.0.1:52429',  # Cascade proxy port
-    'http://127.0.0.1:53715',  # Cascade proxy port
-    'http://127.0.0.1:57295',  # Cascade proxy port (current)
-    'http://127.0.0.1:12964',  # Cascade proxy port (current)
-]
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:8000,http://127.0.0.1:8000"
+).split(",")
 
 # Application definition
 
@@ -213,6 +205,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 STATICFILES_DIRS = [
     BASE_DIR / "src" / "assets",
+    BASE_DIR.parent / "UI" / "html-version" / "Bootstrap5" / "vuexy-html-admin-template" / "full-version" / "assets",
+    ("vendor/fonts/vazirmatn", BASE_DIR / "node_modules" / "vazirmatn"),
 ]
 
 # Default URL on which Django application runs for specific environment
@@ -251,7 +245,7 @@ LOGOUT_REDIRECT_URL = "/login/"
 # ------------------------------------------------------------------------------
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 
