@@ -213,6 +213,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 STATICFILES_DIRS = [
     BASE_DIR / "src" / "assets",
+    BASE_DIR.parent / "UI" / "html-version" / "Bootstrap5" / "vuexy-html-admin-template" / "full-version" / "assets",
+    ("vendor/fonts/vazirmatn", BASE_DIR / "node_modules" / "vazirmatn"),
 ]
 
 # Default URL on which Django application runs for specific environment
