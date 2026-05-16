@@ -1,0 +1,200 @@
+{% extends layout_path %}
+{% load i18n %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}ارزیابی - {{ evaluated_person }}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+    {# Header #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold py-3 mb-0">
+            <span class="text-muted fw-light"><a href="{% url 'interview_detail' interview.pk %}">{{ interview.title }}</a> /</span> 
+            ارزیابی: {{ evaluated_person }}
+        </h4>
+        <div>
+            <a href="{% url 'interview_detail' interview.pk %}" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-1"></i> بازگشت
+            </a>
+        </div>
+    </div>
+
+    {# Evaluated Person Info #}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg bg-label-primary me-3">
+                            <span class="avatar-initial">{{ evaluated_person.first_name|first }}{{ evaluated_person.last_name|first }}</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ evaluated_person }}</h5>
+                            <p class="text-muted mb-0">{{ evaluated_post.title|default:"-" }}</p>
+                            {% if evaluated_post.post_level %}
+                            <span class="badge bg-label-info">{{ evaluated_post.post_level.name }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6>وضعیت ارزیابی</h6>
+                    <div class="progress mt-2">
+                        {% with total=participants_data|length %}
+                        {% widthratio completed_count total 100 as percentage %}
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ percentage }}%">
+                            {{ completed_count }} از {{ total }} مصاحبه‌کننده
+                        </div>
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Competency Matrix #}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="ti ti-list-check me-1"></i> ماتریس شایستگی
+            </h5>
+            <small class="text-muted">نمره‌دهی بر اساس تعاریف Likert Scale</small>
+        </div>
+        <div class="card-body">
+            {% if competency_matrix %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-nowrap" style="width: 20%;">شایستگی</th>
+                            <th class="text-center">سطح</th>
+                            {% for pdata in participants_data %}
+                            <th class="text-center">{{ pdata.participant.interviewer }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pc in competency_matrix %}
+                        <tr>
+                            <td class="fw-semibold">
+                                {{ pc.competency.name }}
+                                {% if pc.competency.description %}
+                                <i class="ti ti-info-circle text-muted ms-1" data-bs-toggle="tooltip" title="{{ pc.competency.description }}"></i>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ pc.level.name|default:"-" }}</td>
+                            {% for pdata in participants_data %}
+                            <td class="text-center">
+                                {% with comp_id=pc.competency.id|stringformat:"s" %}
+                                {% with evaluation=pdata.evaluations_dict|get_item:comp_id %}
+                                {% if evaluation %}
+                                <span class="badge bg-label-primary fs-6">{{ evaluation.score }}</span>
+                                {% else %}
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#scoreModal"
+                                        data-competency="{{ pc.competency.id }}"
+                                        data-competency-name="{{ pc.competency.name }}"
+                                        data-participant="{{ pdata.participant.id }}">
+                                    ثبت
+                                </button>
+                                {% endif %}
+                                {% endwith %}
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="ti ti-alert-triangle me-1"></i>
+                هیچ شایستگی فعالی برای این پست یافت نشد.
+                {% if evaluated_post.post_level %}
+                لطفاً ابتدا ماتریس شایستگی را در
+                <a href="{% url 'level_competency_matrix' evaluated_post.post_level.id %}">این صفحه</a>
+                تنظیم کنید.
+                {% else %}
+                <br>لطفاً ابتدا سطح پست برای این پست تعریف کنید.
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# Score Entry Modal #}
+<div class="modal fade" id="scoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ثبت نمره</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <form method="post" id="scoreForm" action="">
+                {% csrf_token %}
+                <input type="hidden" name="evaluated_person_id" value="{{ evaluated_person.pk }}">
+                <input type="hidden" name="competency_id" id="modalCompetencyId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">شایستگی</label>
+                        <p id="modalCompetencyName" class="form-control-plaintext fw-bold"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">نمره (1-5)</label>
+                        <div class="btn-group w-100" role="group">
+                            {% for i in "12345"|make_list %}
+                            <input type="radio" class="btn-check" name="score" id="score{{ i }}" value="{{ i }}" required>
+                            <label class="btn btn-outline-primary" for="score{{ i }}">{{ i }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">توضیحات</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">بستن</button>
+                    <button type="submit" class="btn btn-primary">ذخیره</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Score modal handler
+        const scoreModal = document.getElementById('scoreModal');
+        if (scoreModal) {
+            scoreModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const competencyId = button.getAttribute('data-competency');
+                const competencyName = button.getAttribute('data-competency-name');
+                const participantId = button.getAttribute('data-participant');
+                
+                document.getElementById('modalCompetencyId').value = competencyId;
+                document.getElementById('modalCompetencyName').textContent = competencyName;
+                
+                // Set form action
+                const form = document.getElementById('scoreForm');
+                form.action = '/interviews/participants/' + participantId + '/save-evaluation/';
+            });
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+    });
+</script>
+{% endblock %}

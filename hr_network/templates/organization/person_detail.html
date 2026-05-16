@@ -1,0 +1,444 @@
+{% extends layout_path %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Person Profile" %} - {{ person }}{% endblock %}
+
+{% block page_css %}
+<!-- Select2 CSS -->
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr-jalali/flatpickr-jalali.min.css' %}" />
+<style>
+  /* Base styles for select2 tree hierarchy */
+  .select2-results__option[aria-selected] { padding-right: 12px; }
+  .select2-results__option--level-1 { padding-right: 25px !important; }
+  .select2-results__option--level-2 { padding-right: 45px !important; }
+  .select2-results__option--level-3 { padding-right: 65px !important; }
+  .select2-results__option--level-4 { padding-right: 85px !important; }
+  
+  /* Flatpickr Custom Styling */
+  .flatpickr-calendar {
+      font-family: inherit !important; /* Use theme font */
+      font-size: 1.2rem !important; /* 20% larger base size */
+  }
+  .flatpickr-calendar .flatpickr-day {
+      font-size: 1.1rem !important;
+      height: 35px !important;
+      line-height: 35px !important;
+  }
+  .flatpickr-calendar .flatpickr-prev-month, .flatpickr-calendar .flatpickr-next-month {
+      font-size: 1.2rem !important;
+  }
+</style>
+{% endblock page_css %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold py-3 mb-0">
+      <span class="text-muted fw-light"><a href="{% url 'person_list' %}" class="text-muted">{% trans "Persons" %}</a> /</span> {{ person.first_name }} {{ person.last_name }}
+    </h4>
+    <div>
+      <button class="btn btn-secondary me-2 waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#editPersonModal">
+        <i class="ti tabler-pencil me-1"></i> {% trans "Edit Person" %}
+      </button>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPostHistoryModal">
+        <i class="ti tabler-plus me-1"></i> {% trans "Assign Post" %}
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Profile Sidebar -->
+    <div class="col-xl-4 col-lg-5 col-md-5">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="user-avatar-section">
+            <div class=" d-flex align-items-center flex-column">
+              <div class="avatar avatar-xl mb-3">
+                {% if person.profile_picture %}
+                  <img src="{{ person.profile_picture.url }}" alt="Avatar" class="rounded-circle" style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                {% else %}
+                  <span class="avatar-initial rounded-circle bg-label-primary">{{ person.first_name|first }}{{ person.last_name|first }}</span>
+                {% endif %}
+              </div>
+              <div class="user-info text-center">
+                <h4 class="mb-2">{{ person.first_name }} {{ person.last_name }}</h4>
+                <span class="badge bg-label-secondary">{{ person.current_post.title|default:"No Active Post" }}</span>
+              </div>
+            </div>
+          </div>
+          <h5 class="pb-2 border-bottom mb-4 mt-4">{% trans "Details" %}</h5>
+          <div class="info-container">
+            <ul class="list-unstyled">
+              <li class="mb-3">
+                <span class="fw-medium me-2">{% trans "National ID:" %}</span>
+                <span>{{ person.national_id|default:"-" }}</span>
+              </li>
+              <li class="mb-3">
+                <span class="fw-medium me-2">{% trans "Email:" %}</span>
+                <span>{{ person.email|default:"-" }}</span>
+              </li>
+              <li class="mb-3">
+                <span class="fw-medium me-2">{% trans "Contact:" %}</span>
+                <span>{{ person.phone_number|default:"-" }}</span>
+              </li>
+              <li class="mb-3">
+                <span class="fw-medium me-2">{% trans "System User:" %}</span>
+                <span>{% if person.user %}{{ person.user.username }}{% else %}<span class="text-muted">{% trans "Not linked" %}</span>{% endif %}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post History -->
+    <div class="col-xl-8 col-lg-7 col-md-7">
+      <div class="card card-action mb-4">
+        <div class="card-header align-items-center">
+          <h5 class="card-action-title mb-0">{% trans "Post Assignment History" %}</h5>
+        </div>
+        <div class="card-body">
+          <ul class="timeline ms-2">
+            {% for history in person.post_history.all %}
+            <li class="timeline-item timeline-item-transparent">
+              <span class="timeline-point {% if history.is_active %}timeline-point-primary{% else %}timeline-point-secondary{% endif %}"></span>
+              <div class="timeline-event">
+                <div class="timeline-header mb-1">
+                  <h6 class="mb-0">{{ history.post.title }}</h6>
+                  <div>
+                    <small class="text-muted me-2">
+                      <span class="jalali-date" data-date="{{ history.start_date|date:'Y-m-d' }}"></span> - 
+                      {% if history.end_date %}
+                        <span class="jalali-date" data-date="{{ history.end_date|date:'Y-m-d' }}"></span>
+                      {% else %}
+                        {% trans "Present" %}
+                      {% endif %}
+                    </small>
+                    <a href="javascript:;" class="text-secondary" data-bs-toggle="modal" data-bs-target="#editPostHistoryModal{{ history.pk }}" title="{% trans 'Edit' %}">
+                      <i class="ti tabler-pencil icon-sm"></i>
+                    </a>
+                  </div>
+                </div>
+                <p class="mb-2">{{ history.post.department.name }}</p>
+                {% if history.description %}
+                  <p class="small text-muted mb-2"><i class="ti tabler-quote me-1"></i>{{ history.description }}</p>
+                {% endif %}
+                {% if history.is_active %}
+                <span class="badge bg-label-success">{% trans "Active" %}</span>
+                {% else %}
+                <span class="badge bg-label-secondary">{% trans "Inactive" %}</span>
+                {% endif %}
+              </div>
+            </li>
+            {% empty %}
+            <li class="timeline-item timeline-item-transparent border-transparent">
+              <span class="timeline-point timeline-point-secondary"></span>
+              <div class="timeline-event">
+                <p class="mb-0 text-muted">{% trans "No posts assigned yet." %}</p>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Person Modal -->
+<div class="modal fade" id="editPersonModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Edit Person Profile" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'person_update' person.pk %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- Hidden input to redirect back to person_detail after edit -->
+        <input type="hidden" name="next" value="{% url 'person_detail' person.pk %}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-12 text-center mb-3">
+              <div class="avatar avatar-xl mx-auto mb-2">
+                {% if person.profile_picture %}
+                  <img src="{{ person.profile_picture.url }}" alt="Avatar" class="rounded-circle" style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                {% else %}
+                  <span class="avatar-initial rounded-circle bg-label-primary">{{ person.first_name|first }}{{ person.last_name|first }}</span>
+                {% endif %}
+              </div>
+              <label class="form-label d-block">{% trans "Profile Picture" %}</label>
+              {{ person_form.profile_picture }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "First Name" %}</label>
+              {{ person_form.first_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Last Name" %}</label>
+              {{ person_form.last_name }}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">{% trans "National ID" %}</label>
+              {{ person_form.national_id }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Phone Number" %}</label>
+              {{ person_form.phone_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Email" %}</label>
+              {{ person_form.email }}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">{% trans "Linked User Account" %}</label>
+              {{ person_form.user }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Post History Modal -->
+<div class="modal fade" id="addPostHistoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Assign Organizational Post" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'add_person_post_history' %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="person" value="{{ person.pk }}">
+          <div class="mb-3">
+            <label class="form-label">{% trans "Organizational Post" %}</label>
+            <select name="post" id="postSelect" class="form-select select2 post-select" required data-dropdown-parent="#addPostHistoryModal">
+              <option value="">---------</option>
+              {% for post in available_posts %}
+              <option value="{{ post.pk }}"
+                  data-department="{{ post.department.name }}"
+                  data-level="{% if post.parent_post %}1{% else %}0{% endif %}">
+                  {{ post.title }} ({{ post.department.name }})
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">{% trans "Search for a post within the organization." %}</div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{% trans "Start Date" %}</label>
+              <!-- Hidden real date input for backend -->
+              <input type="hidden" name="start_date" id="start_date_real">
+              <!-- Visible jalali datepicker -->
+              <input type="text" id="start_date_view" class="form-control persian-date" required autocomplete="off">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{% trans "End Date" %} <small class="text-muted">({% trans "Optional" %})</small></label>
+              <input type="hidden" name="end_date" id="end_date_real">
+              <input type="text" id="end_date_view" class="form-control persian-date" autocomplete="off">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% trans "Description / Notes" %}</label>
+            <textarea name="description" class="form-control" rows="2" placeholder="{% trans 'Additional details about this assignment...' %}"></textarea>
+          </div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="isActiveCheck" name="is_active" checked>
+            <label class="form-check-label" for="isActiveCheck">{% trans "Currently Active" %}</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Save Assignment" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Post History Modals -->
+{% for history in person.post_history.all %}
+<div class="modal fade" id="editPostHistoryModal{{ history.pk }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Edit Organizational Post" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'update_person_post_history' history.pk %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="person" value="{{ person.pk }}">
+          <div class="mb-3">
+            <label class="form-label">{% trans "Organizational Post" %}</label>
+            <select name="post" class="form-select select2 post-select" required data-dropdown-parent="#editPostHistoryModal{{ history.pk }}">
+              <option value="">---------</option>
+              {% for post in available_posts %}
+              <option value="{{ post.pk }}" {% if history.post.pk == post.pk %}selected{% endif %}
+                  data-department="{{ post.department.name }}"
+                  data-level="{% if post.parent_post %}1{% else %}0{% endif %}">
+                  {{ post.title }} ({{ post.department.name }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{% trans "Start Date" %}</label>
+              <input type="hidden" name="start_date" id="start_date_real_{{ history.pk }}" value="{{ history.start_date|date:'Y-m-d' }}">
+              <input type="text" id="start_date_view_{{ history.pk }}" class="form-control edit-start-date" required autocomplete="off" data-pk="{{ history.pk }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{% trans "End Date" %} <small class="text-muted">({% trans "Optional" %})</small></label>
+              <input type="hidden" name="end_date" id="end_date_real_{{ history.pk }}" value="{{ history.end_date|date:'Y-m-d'|default:'' }}">
+              <input type="text" id="end_date_view_{{ history.pk }}" class="form-control edit-end-date" autocomplete="off" data-pk="{{ history.pk }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% trans "Description / Notes" %}</label>
+            <textarea name="description" class="form-control" rows="2">{{ history.description|default:'' }}</textarea>
+          </div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="isActiveCheck{{ history.pk }}" name="is_active" {% if history.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="isActiveCheck{{ history.pk }}">{% trans "Currently Active" %}</label>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          {% trans "Are you sure you want to delete this record?" as confirm_msg %}
+          <button type="button" class="btn btn-label-danger" onclick="if(confirm('{{ confirm_msg }}')) { document.getElementById('deleteForm{{ history.pk }}').submit(); }">
+            <i class="ti tabler-trash me-1"></i> {% trans "Delete" %}
+          </button>
+          <div>
+            <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+          </div>
+        </div>
+      </form>
+      <form id="deleteForm{{ history.pk }}" action="{% url 'delete_person_post_history' history.pk %}" method="POST" class="d-none">
+        {% csrf_token %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block page_js %}
+<!-- Select2 and Datepicker JS -->
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr-jalali/flatpickr-jalali.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr-jalali/fa.js' %}"></script>
+
+<script>
+  $(document).ready(function() {
+
+    // Convert backend Greg dates to Jalali for timeline display
+    $('.jalali-date').each(function() {
+      const gDate = $(this).data('date'); // YYYY-MM-DD
+      if(gDate && gDate !== 'None') {
+        let faDate = new Intl.DateTimeFormat('fa-IR-u-nu-latn', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit'
+        }).format(new Date(gDate));
+        $(this).text(faDate);
+      }
+    });
+
+    // Initialize Select2 with hierarchy formatting for all post selects
+    $('.post-select').each(function() {
+      var dropdownParentId = $(this).data('dropdown-parent');
+      $(this).select2({
+        dropdownParent: $(dropdownParentId),
+        placeholder: '{% trans "Search for a post..." %}',
+        allowClear: true,
+        templateResult: function (data) {
+          if (!data.id) return data.text;
+          var $element = $(data.element);
+          var level = $element.data('level') || 0;
+          // Apply indenting class based on level (simplified visual tree)
+          var $wrapper = $('<span></span>').text(data.text);
+          if (level > 0) {
+              $wrapper.prepend('<i class="ti tabler-arrow-down-right ms-2 me-1 text-muted"></i>');
+              $wrapper.addClass('ps-' + (level * 3));
+          }
+          return $wrapper;
+        }
+      });
+    });
+
+    // Initialize Flatpickr for Add Start Date
+    flatpickr('#start_date_view', {
+      locale: 'fa',
+      dateFormat: "Y/m/d",
+      onChange: function(selectedDates, dateStr, instance) {
+        if (selectedDates.length > 0) {
+          const d = selectedDates[0];
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          $('#start_date_real').val(`${year}-${month}-${day}`);
+        }
+      }
+    });
+
+    // Initialize Flatpickr for Add End Date
+    flatpickr('#end_date_view', {
+      locale: 'fa',
+      dateFormat: "Y/m/d",
+      onChange: function(selectedDates, dateStr, instance) {
+        if (selectedDates.length > 0) {
+          const d = selectedDates[0];
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          $('#end_date_real').val(`${year}-${month}-${day}`);
+        } else {
+          $('#end_date_real').val('');
+        }
+      }
+    });
+
+    // Initialize Edit Modals Datepickers
+    $('.edit-start-date, .edit-end-date').each(function() {
+      const pk = $(this).data('pk');
+      const isStart = $(this).hasClass('edit-start-date');
+      const realInputId = isStart ? '#start_date_real_' + pk : '#end_date_real_' + pk;
+      const gDate = $(realInputId).val();
+      
+      let defaultDate = undefined;
+      if(gDate) {
+         defaultDate = new Date(gDate);
+      }
+      
+      flatpickr(this, {
+        locale: 'fa',
+        dateFormat: "Y/m/d",
+        defaultDate: defaultDate,
+        onChange: function(selectedDates, dateStr, instance) {
+          if (selectedDates.length > 0) {
+            const d = selectedDates[0];
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            $(realInputId).val(`${year}-${month}-${day}`);
+          } else {
+            $(realInputId).val('');
+          }
+        }
+      });
+    });
+
+  });
+</script>
+{% endblock page_js %}

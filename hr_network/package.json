@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "cropperjs": "^2.1.0",
+    "flatpickr": "^4.6.13",
+    "flatpickr-jalali-support": "^1.0.3",
+    "jalaali-js": "^1.2.8",
+    "jalali-moment": "^3.3.11",
+    "jdate": "^0.0.2",
+    "jsdom": "^29.0.0",
+    "vazirmatn": "^33.0.3"
+  }
+}

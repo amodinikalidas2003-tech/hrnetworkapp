@@ -1,0 +1,72 @@
+from django.urls import path
+from .views import (
+    DepartmentListView,
+    DepartmentCreateView,
+    DepartmentUpdateView,
+    DepartmentDeleteView,
+    OrganizationalPostCreateView,
+    OrganizationalPostUpdateView,
+    OrganizationalPostDeleteView,
+    ImportPostsExcelView,
+    ExportPostsExcelView,
+    DownloadPostExcelTemplateView,
+    ExportDepartmentsExcelView,
+    DownloadDepartmentExcelTemplateView,
+    ImportDepartmentsExcelView,
+    PersonListView,
+    PersonCreateView,
+    PersonUpdateView,
+    PersonDeleteView,
+    PersonDetailView,
+    AddPersonPostHistoryView,
+    UpdatePersonPostHistoryView,
+    DeletePersonPostHistoryView,
+    AddCompetencyLevelOrganizationView,
+    UpdateCompetencyLevelOrganizationView,
+    DeleteCompetencyLevelOrganizationView,
+    AddPostLevelView,
+    UpdatePostLevelView,
+    DeletePostLevelView,
+    AddManagementLevelView,
+    UpdateManagementLevelView,
+    DeleteManagementLevelView
+)
+
+urlpatterns = [
+    path('departments/', DepartmentListView.as_view(), name='department_list'),
+    path('departments/create/', DepartmentCreateView.as_view(), name='department_create'),
+    path('departments/<uuid:pk>/update/', DepartmentUpdateView.as_view(), name='department_update'),
+    path('departments/<uuid:pk>/delete/', DepartmentDeleteView.as_view(), name='department_delete'),
+    path('departments/import/', ImportDepartmentsExcelView.as_view(), name='department_import'),
+    path('departments/export/', ExportDepartmentsExcelView.as_view(), name='department_export'),
+    path('departments/template/', DownloadDepartmentExcelTemplateView.as_view(), name='department_template'),
+    
+    path('posts/create/', OrganizationalPostCreateView.as_view(), name='post_create'),
+    path('posts/<uuid:pk>/update/', OrganizationalPostUpdateView.as_view(), name='post_update'),
+    path('posts/<uuid:pk>/delete/', OrganizationalPostDeleteView.as_view(), name='post_delete'),
+    path('posts/import/', ImportPostsExcelView.as_view(), name='post_import'),
+    path('posts/export/', ExportPostsExcelView.as_view(), name='post_export'),
+    path('posts/template/', DownloadPostExcelTemplateView.as_view(), name='post_template'),
+
+    path('persons/', PersonListView.as_view(), name='person_list'),
+    path('persons/create/', PersonCreateView.as_view(), name='person_create'),
+    path('persons/<uuid:pk>/update/', PersonUpdateView.as_view(), name='person_update'),
+    path('persons/<uuid:pk>/delete/', PersonDeleteView.as_view(), name='person_delete'),
+    path('persons/<uuid:pk>/', PersonDetailView.as_view(), name='person_detail'),
+    path('persons/post-history/add/', AddPersonPostHistoryView.as_view(), name='add_person_post_history'),
+    path('persons/post-history/<uuid:pk>/update/', UpdatePersonPostHistoryView.as_view(), name='update_person_post_history'),
+    path('persons/post-history/<uuid:pk>/delete/', DeletePersonPostHistoryView.as_view(), name='delete_person_post_history'),
+
+    # Competency Level Management URLs (for Organization Page)
+    path('levels/add/', AddCompetencyLevelOrganizationView.as_view(), name='add_competency_level_organization'),
+    path('levels/<uuid:pk>/update/', UpdateCompetencyLevelOrganizationView.as_view(), name='update_competency_level'),
+    path('levels/<uuid:pk>/delete/', DeleteCompetencyLevelOrganizationView.as_view(), name='delete_competency_level'),
+
+    path('post-levels/add/', AddPostLevelView.as_view(), name='add_post_level'),
+    path('post-levels/<uuid:pk>/update/', UpdatePostLevelView.as_view(), name='update_post_level'),
+    path('post-levels/<uuid:pk>/delete/', DeletePostLevelView.as_view(), name='delete_post_level'),
+
+    path('management-levels/add/', AddManagementLevelView.as_view(), name='add_management_level'),
+    path('management-levels/<uuid:pk>/update/', UpdateManagementLevelView.as_view(), name='update_management_level'),
+    path('management-levels/<uuid:pk>/delete/', DeleteManagementLevelView.as_view(), name='delete_management_level'),
+]

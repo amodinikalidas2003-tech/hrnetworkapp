@@ -1,0 +1,50 @@
+{% extends layout_path %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}حذف مصاحبه{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0 text-danger">
+                        <i class="ti ti-alert-triangle me-1"></i>
+                        تأیید حذف
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="ti ti-trash fs-1 text-danger"></i>
+                    </div>
+                    <h5>آیا از حذف این جلسه مصاحبه اطمینان دارید؟</h5>
+                    <p class="text-muted">
+                        <strong>{{ object.title }}</strong>
+                    </p>
+                    <p class="text-muted small">
+                        مصاحبه‌کننده: {{ object.interviewer }}<br>
+                        ارزیابی‌شونده: {{ object.evaluated_person }}
+                    </p>
+                    <div class="alert alert-warning">
+                        <i class="ti ti-info-circle me-1"></i>
+                        این عمل غیرقابل بازگشت است و تمام پاسخ‌های ثبت شده حذف خواهند شد.
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ti ti-trash me-1"></i> حذف
+                        </button>
+                        <a href="{% url 'interview_list' %}" class="btn btn-outline-secondary">
+                            <i class="ti ti-x me-1"></i> انصراف
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

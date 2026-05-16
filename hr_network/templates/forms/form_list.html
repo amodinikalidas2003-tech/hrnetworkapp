@@ -1,0 +1,62 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Form Schemas" %}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="py-3 mb-4">
+    <span class="text-muted fw-light">{% trans "Forms" %} /</span> {% trans "Schemas" %}
+  </h4>
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{% trans "Available Forms" %}</h5>
+        <button class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> {% trans "Create Form" %}
+        </button>
+    </div>
+    <div class="table-responsive text-nowrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Description" %}</th>
+            <th>{% trans "Created By" %}</th>
+            <th>{% trans "Created At" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody class="table-border-bottom-0">
+          {% for form in forms %}
+          <tr>
+            <td><strong>{{ form.name }}</strong></td>
+            <td>{{ form.description|default:"-" }}</td>
+            <td>{{ form.created_by.username }}</td>
+            <td>{{ form.created_at|date:"Y-m-d" }}</td>
+            <td>
+              <div class="dropdown">
+                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                  <i class="ti ti-dots-vertical"></i>
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="javascript:void(0);"><i class="ti ti-eye me-1"></i> {% trans "View" %}</a>
+                  <a class="dropdown-item" href="javascript:void(0);"><i class="ti ti-pencil me-1"></i> {% trans "Edit" %}</a>
+                  <a class="dropdown-item" href="javascript:void(0);"><i class="ti ti-trash me-1"></i> {% trans "Delete" %}</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center">{% trans "No forms available." %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

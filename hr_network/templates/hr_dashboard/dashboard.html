@@ -1,0 +1,123 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "HR Dashboard" %}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div class="card-info">
+              <p class="card-text">{% trans "Total Employees" %}</p>
+              <div class="d-flex align-items-end mb-2">
+                <h4 class="card-title mb-0 me-2">{{ total_employees }}</h4>
+              </div>
+            </div>
+            <div class="card-icon">
+              <span class="badge bg-label-primary rounded p-2">
+                <i class="ti ti-users ti-sm"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div class="card-info">
+              <p class="card-text">{% trans "Departments" %}</p>
+              <div class="d-flex align-items-end mb-2">
+                <h4 class="card-title mb-0 me-2">{{ total_departments }}</h4>
+              </div>
+            </div>
+            <div class="card-icon">
+              <span class="badge bg-label-success rounded p-2">
+                <i class="ti ti-building-skyscraper ti-sm"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div class="card-info">
+              <p class="card-text">{% trans "Active Forms" %}</p>
+              <div class="d-flex align-items-end mb-2">
+                <h4 class="card-title mb-0 me-2">{{ total_forms }}</h4>
+              </div>
+            </div>
+            <div class="card-icon">
+              <span class="badge bg-label-warning rounded p-2">
+                <i class="ti ti-clipboard-list ti-sm"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div class="card-info">
+              <p class="card-text">{% trans "Total Assessments" %}</p>
+              <div class="d-flex align-items-end mb-2">
+                <h4 class="card-title mb-0 me-2">{{ total_assessments }}</h4>
+              </div>
+            </div>
+            <div class="card-icon">
+              <span class="badge bg-label-danger rounded p-2">
+                <i class="ti ti-chart-bar ti-sm"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <h5 class="card-title m-0 me-2">{% trans "Quick Actions" %}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+                <a href="{% url 'department_list' %}" class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center p-3">
+                    <i class="ti ti-sitemap me-2"></i> {% trans "Manage Org" %}
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="{% url 'assessment_list' %}" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center p-3">
+                    <i class="ti ti-checkup-list me-2"></i> {% trans "View Assessments" %}
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="{% url 'file_list' %}" class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center p-3">
+                    <i class="ti ti-file-upload me-2"></i> {% trans "File Archive" %}
+                </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

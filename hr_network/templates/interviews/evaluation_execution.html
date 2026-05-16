@@ -1,0 +1,129 @@
+{% extends layout_path %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Interview Evaluation" %} - {{ evaluation.evaluated_person }}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold py-3 mb-0">
+      <span class="text-muted fw-light"><a href="{% url 'interview_session_detail' evaluation.session.pk %}" class="text-muted">{{ evaluation.session.title }}</a> /</span> {% trans "Evaluate:" %} {{ evaluation.evaluated_person.first_name }} {{ evaluation.evaluated_person.last_name }}
+    </h4>
+    <div class="d-flex align-items-center">
+      {% if evaluation.is_completed %}
+      <span class="badge bg-label-success fs-6 me-3"><i class="ti tabler-check me-1"></i> {% trans "Completed" %}</span>
+      {% else %}
+      <span class="badge bg-label-warning fs-6 me-3">{% trans "In Progress" %}</span>
+      {% endif %}
+      
+      <a href="{% url 'interview_session_detail' evaluation.session.pk %}" class="btn btn-outline-secondary">
+        <i class="ti tabler-arrow-left me-1"></i> {% trans "Back to Session" %}
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Candidate Info -->
+    <div class="col-md-3 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <div class="avatar avatar-xl mx-auto mb-3">
+            <span class="avatar-initial rounded-circle bg-label-primary">{{ evaluation.evaluated_person.first_name|first }}{{ evaluation.evaluated_person.last_name|first }}</span>
+          </div>
+          <h5 class="mb-1">{{ evaluation.evaluated_person.first_name }} {{ evaluation.evaluated_person.last_name }}</h5>
+          <span class="badge bg-label-secondary mb-3">{{ evaluation.evaluated_person.current_post.title|default:"No Active Post" }}</span>
+          
+          <ul class="list-unstyled text-start mt-4">
+            <li class="mb-2"><strong>{% trans "Department:" %}</strong> <br>{{ evaluation.evaluated_person.current_post.department.name|default:"-" }}</li>
+            <li class="mb-2"><strong>{% trans "Interviewer:" %}</strong> <br>{{ evaluation.session.interviewer.username|default:"-" }}</li>
+            <li class="mb-2"><strong>{% trans "Date:" %}</strong> <br>{{ evaluation.session.date|date:"Y-m-d H:i"|default:"-" }}</li>
+          </ul>
+
+          {% if evaluation.total_score > 0 %}
+          <div class="mt-4 pt-4 border-top">
+            <h6>{% trans "Total Score" %}</h6>
+            <h2 class="text-primary mb-0">{{ evaluation.total_score|floatformat:1 }} <small class="text-muted fs-6">/10</small></h2>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluation Form -->
+    <div class="col-md-9 mb-4">
+      <div class="card">
+        <div class="card-header border-bottom">
+          <h5 class="mb-0">{% trans "Competency Assessment Form" %}</h5>
+        </div>
+        <div class="card-body mt-3">
+          <form method="POST">
+            {% csrf_token %}
+            
+            <div class="accordion mt-3" id="accordionEvaluation">
+              {% for indicator in indicators %}
+              <div class="card accordion-item {% if forloop.first %}active{% endif %}">
+                <h2 class="accordion-header" id="heading{{ indicator.id }}">
+                  <button type="button" class="accordion-button {% if not forloop.first %}collapsed{% endif %}" data-bs-toggle="collapse" data-bs-target="#collapse{{ indicator.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ indicator.id }}">
+                    {{ indicator.competency.name }}
+                    <span class="badge bg-label-info ms-3">{% trans "Weight:" %} {{ indicator.data.weight|default:"5" }}</span>
+                  </button>
+                </h2>
+
+                <div id="collapse{{ indicator.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ indicator.id }}" data-bs-parent="#accordionEvaluation">
+                  <div class="accordion-body border-top pt-3">
+                    
+                    <div class="row">
+                      <div class="col-lg-6 mb-3">
+                        <div class="bg-lighter p-3 rounded h-100">
+                          <h6 class="mb-2 text-primary">{% trans "Definition / Expected Behavior" %}</h6>
+                          <p class="small mb-0">{{ indicator.data.definition|linebreaksbr|default:"No definition provided." }}</p>
+                        </div>
+                      </div>
+                      <div class="col-lg-6 mb-3">
+                        <div class="bg-lighter p-3 rounded h-100">
+                          <h6 class="mb-2 text-primary">{% trans "Suggested Questions" %}</h6>
+                          <p class="small mb-0">{{ indicator.data.questions|linebreaksbr|default:"No questions provided." }}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row mt-3">
+                      <div class="col-md-4 mb-3">
+                        <label class="form-label text-dark fw-medium">{% trans "Score (1-10)" %}</label>
+                        <input type="number" name="score_{{ indicator.id }}" class="form-control" min="1" max="10" step="0.5" 
+                               value="{% for key, val in evaluation.evaluation_data.items %}{% if key == indicator.id|stringformat:'s' %}{{ val.score }}{% endif %}{% endfor %}"
+                               {% if evaluation.is_completed %}readonly{% endif %}>
+                      </div>
+                      <div class="col-md-8 mb-3">
+                        <label class="form-label text-dark fw-medium">{% trans "Interviewer Notes / Justification" %}</label>
+                        <textarea name="notes_{{ indicator.id }}" class="form-control" rows="3" {% if evaluation.is_completed %}readonly{% endif %}>{% for key, val in evaluation.evaluation_data.items %}{% if key == indicator.id|stringformat:'s' %}{{ val.notes }}{% endif %}{% endfor %}</textarea>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+              {% empty %}
+              <div class="alert alert-warning">
+                {% trans "This template has no competencies selected." %}
+              </div>
+              {% endfor %}
+            </div>
+
+            {% if not evaluation.is_completed %}
+            <div class="mt-4 text-end">
+              <button type="submit" name="save_draft" class="btn btn-label-secondary me-2">{% trans "Save Draft" %}</button>
+              {% trans "Are you sure you want to complete this evaluation? This action will finalize the scores." as confirm_msg %}
+              <button type="submit" name="complete_eval" class="btn btn-primary" onclick="return confirm('{{ confirm_msg }}');">
+                <i class="ti tabler-check me-1"></i> {% trans "Complete Evaluation" %}
+              </button>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

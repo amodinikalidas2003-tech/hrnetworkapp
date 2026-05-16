@@ -1,0 +1,447 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-14 22:14+0330\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+#: .\apps\assessments\models.py:14
+#: .\templates\assessments\assessment_list.html:21
+msgid "Evaluated User"
+msgstr ""
+
+#: .\apps\assessments\models.py:20
+#: .\templates\assessments\assessment_list.html:20
+msgid "Evaluator"
+msgstr ""
+
+#: .\apps\assessments\models.py:30 .\apps\forms\models.py:57
+msgid "Form Submission"
+msgstr ""
+
+#: .\apps\assessments\models.py:34
+msgid "Dimension Scores"
+msgstr ""
+
+#: .\apps\assessments\models.py:36
+#: .\templates\assessments\assessment_list.html:22
+msgid "Total Score"
+msgstr ""
+
+#: .\apps\assessments\models.py:42
+msgid "Assessment Score"
+msgstr ""
+
+#: .\apps\assessments\models.py:43
+#: .\templates\assessments\assessment_list.html:15
+msgid "Assessment Scores"
+msgstr ""
+
+#: .\apps\files\models.py:14
+msgid "File"
+msgstr ""
+
+#: .\apps\files\models.py:15
+msgid "Original Filename"
+msgstr ""
+
+#: .\apps\files\models.py:16
+msgid "Content Type"
+msgstr ""
+
+#: .\apps\files\models.py:17
+msgid "Size (bytes)"
+msgstr ""
+
+#: .\apps\files\models.py:23 .\templates\files\file_list.html:26
+msgid "Uploaded By"
+msgstr ""
+
+#: .\apps\files\models.py:26 .\apps\forms\models.py:13
+#: .\apps\organization\models.py:27 .\templates\forms\form_list.html:26
+#: .\templates\organization\department_list.html:128
+#: .\templates\organization\department_list.html:181
+#: .\templates\organization\department_list.html:212
+msgid "Description"
+msgstr ""
+
+#: .\apps\files\models.py:30 .\templates\files\file_list.html:6
+#: .\templates\hr_dashboard\dashboard.html:114
+msgid "File Archive"
+msgstr ""
+
+#: .\apps\files\models.py:31
+msgid "File Archives"
+msgstr ""
+
+#: .\apps\forms\models.py:12
+msgid "Form Name"
+msgstr ""
+
+#: .\apps\forms\models.py:15
+msgid "Schema Definition"
+msgstr ""
+
+#: .\apps\forms\models.py:22 .\templates\forms\form_list.html:27
+msgid "Created By"
+msgstr ""
+
+#: .\apps\forms\models.py:28 .\apps\forms\models.py:40
+msgid "Form Schema"
+msgstr ""
+
+#: .\apps\forms\models.py:29 .\templates\forms\form_list.html:6
+msgid "Form Schemas"
+msgstr ""
+
+#: .\apps\forms\models.py:48
+msgid "Submitted By"
+msgstr ""
+
+#: .\apps\forms\models.py:51
+msgid "Submission Data"
+msgstr ""
+
+#: .\apps\forms\models.py:58
+msgid "Form Submissions"
+msgstr ""
+
+#: .\apps\organization\models.py:10 .\templates\forms\form_list.html:25
+#: .\templates\organization\department_list.html:53
+#: .\templates\organization\department_list.html:169
+msgid "Name"
+msgstr ""
+
+#: .\apps\organization\models.py:17
+#: .\templates\organization\department_list.html:55
+#: .\templates\organization\department_list.html:173
+msgid "Parent Department"
+msgstr ""
+
+#: .\apps\organization\models.py:25
+#: .\templates\organization\department_list.html:54
+#: .\templates\organization\department_list.html:177
+msgid "Manager"
+msgstr ""
+
+#: .\apps\organization\models.py:32 .\apps\organization\models.py:45
+#: .\apps\organization\models.py:80
+#: .\templates\organization\department_list.html:126
+#: .\templates\organization\department_list.html:204
+msgid "Department"
+msgstr ""
+
+#: .\apps\organization\models.py:33 .\templates\hr_dashboard\dashboard.html:37
+#: .\templates\organization\department_list.html:19
+msgid "Departments"
+msgstr ""
+
+#: .\apps\organization\models.py:40
+msgid "Post Title"
+msgstr ""
+
+#: .\apps\organization\models.py:53
+#: .\templates\organization\department_list.html:127
+msgid "Parent Post (Manager)"
+msgstr ""
+
+#: .\apps\organization\models.py:55
+msgid "Job Description"
+msgstr ""
+
+#: .\apps\organization\models.py:60
+msgid "Organizational Post"
+msgstr ""
+
+#: .\apps\organization\models.py:61
+#: .\templates\organization\department_list.html:104
+msgid "Organizational Posts"
+msgstr ""
+
+#: .\apps\organization\models.py:72
+msgid "User"
+msgstr ""
+
+#: .\apps\organization\models.py:82
+msgid "Job Title"
+msgstr ""
+
+#: .\apps\organization\models.py:83
+msgid "Bio"
+msgstr ""
+
+#: .\apps\organization\models.py:88
+msgid "Employee Profile"
+msgstr ""
+
+#: .\apps\organization\models.py:89
+msgid "Employee Profiles"
+msgstr ""
+
+#: .\config\settings.py:186 .\templates\layout\partials\navbar\navbar.html:72
+msgid "English"
+msgstr ""
+
+#: .\config\settings.py:187
+msgid "Persian"
+msgstr ""
+
+#: .\config\settings.py:188 .\templates\layout\partials\navbar\navbar.html:77
+msgid "French"
+msgstr ""
+
+#: .\config\settings.py:189 .\templates\layout\partials\navbar\navbar.html:82
+msgid "Arabic"
+msgstr ""
+
+#: .\config\settings.py:190 .\templates\layout\partials\navbar\navbar.html:87
+msgid "German"
+msgstr ""
+
+#: .\templates\assessments\assessment_list.html:6
+#: .\templates\assessments\assessment_list.html:11
+msgid "Assessments"
+msgstr ""
+
+#: .\templates\assessments\assessment_list.html:11
+msgid "Scores"
+msgstr ""
+
+#: .\templates\assessments\assessment_list.html:23
+msgid "Date"
+msgstr ""
+
+#: .\templates\assessments\assessment_list.html:24
+msgid "Details"
+msgstr ""
+
+#: .\templates\assessments\assessment_list.html:44
+msgid "No assessments found."
+msgstr ""
+
+#: .\templates\files\file_list.html:11
+msgid "Files"
+msgstr ""
+
+#: .\templates\files\file_list.html:11
+msgid "Archive"
+msgstr ""
+
+#: .\templates\files\file_list.html:16
+msgid "Uploaded Files"
+msgstr ""
+
+#: .\templates\files\file_list.html:18
+msgid "Upload New"
+msgstr ""
+
+#: .\templates\files\file_list.html:25
+msgid "Filename"
+msgstr ""
+
+#: .\templates\files\file_list.html:27
+msgid "Type"
+msgstr ""
+
+#: .\templates\files\file_list.html:28
+msgid "Size"
+msgstr ""
+
+#: .\templates\files\file_list.html:29
+msgid "Uploaded At"
+msgstr ""
+
+#: .\templates\files\file_list.html:30 .\templates\forms\form_list.html:29
+#: .\templates\organization\department_list.html:57
+msgid "Actions"
+msgstr ""
+
+#: .\templates\files\file_list.html:51
+msgid "No files archived."
+msgstr ""
+
+#: .\templates\forms\form_list.html:11
+msgid "Forms"
+msgstr ""
+
+#: .\templates\forms\form_list.html:11
+msgid "Schemas"
+msgstr ""
+
+#: .\templates\forms\form_list.html:16
+msgid "Available Forms"
+msgstr ""
+
+#: .\templates\forms\form_list.html:18
+msgid "Create Form"
+msgstr ""
+
+#: .\templates\forms\form_list.html:28
+#: .\templates\organization\department_list.html:56
+msgid "Created At"
+msgstr ""
+
+#: .\templates\forms\form_list.html:45
+msgid "View"
+msgstr ""
+
+#: .\templates\forms\form_list.html:46
+#: .\templates\organization\department_list.html:85
+msgid "Edit"
+msgstr ""
+
+#: .\templates\forms\form_list.html:47
+#: .\templates\organization\department_list.html:86
+msgid "Delete"
+msgstr ""
+
+#: .\templates\forms\form_list.html:54
+msgid "No forms available."
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:6
+msgid "HR Dashboard"
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:17
+msgid "Total Employees"
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:57
+msgid "Active Forms"
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:77
+msgid "Total Assessments"
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:98
+msgid "Quick Actions"
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:104
+msgid "Manage Org"
+msgstr ""
+
+#: .\templates\hr_dashboard\dashboard.html:109
+msgid "View Assessments"
+msgstr ""
+
+#: .\templates\organization\department_list.html:6
+#: .\templates\organization\department_list.html:11
+msgid "Organization"
+msgstr ""
+
+#: .\templates\organization\department_list.html:11
+msgid "Structure"
+msgstr ""
+
+#: .\templates\organization\department_list.html:24
+msgid "Management Levels (Posts)"
+msgstr ""
+
+#: .\templates\organization\department_list.html:33
+msgid "Department List"
+msgstr ""
+
+#: .\templates\organization\department_list.html:36
+#: .\templates\organization\department_list.html:107
+msgid "Download Template"
+msgstr ""
+
+#: .\templates\organization\department_list.html:39
+#: .\templates\organization\department_list.html:110
+msgid "Import Excel"
+msgstr ""
+
+#: .\templates\organization\department_list.html:42
+#: .\templates\organization\department_list.html:113
+msgid "Export Excel"
+msgstr ""
+
+#: .\templates\organization\department_list.html:45
+#: .\templates\organization\department_list.html:162
+msgid "Add Department"
+msgstr ""
+
+#: .\templates\organization\department_list.html:68
+msgid "N/A"
+msgstr ""
+
+#: .\templates\organization\department_list.html:75
+msgid "Root"
+msgstr ""
+
+#: .\templates\organization\department_list.html:93
+msgid "No departments found."
+msgstr ""
+
+#: .\templates\organization\department_list.html:116
+msgid "Add Post"
+msgstr ""
+
+#: .\templates\organization\department_list.html:125
+#: .\templates\organization\department_list.html:200
+msgid "Title"
+msgstr ""
+
+#: .\templates\organization\department_list.html:140
+msgid "Top Level"
+msgstr ""
+
+#: .\templates\organization\department_list.html:147
+msgid "No posts found."
+msgstr ""
+
+#: .\templates\organization\department_list.html:184
+#: .\templates\organization\department_list.html:215
+msgid "Submit"
+msgstr ""
+
+#: .\templates\organization\department_list.html:185
+#: .\templates\organization\department_list.html:216
+msgid "Cancel"
+msgstr ""
+
+#: .\templates\organization\department_list.html:193
+msgid "Add Organizational Post"
+msgstr ""
+
+#: .\templates\organization\department_list.html:208
+msgid "Parent Post (Optional)"
+msgstr ""
+
+#: .\templates\organization\department_list.html:226
+msgid "Import Posts from Excel"
+msgstr ""
+
+#: .\templates\organization\department_list.html:234
+#: .\templates\organization\department_list.html:259
+msgid "Excel File"
+msgstr ""
+
+#: .\templates\organization\department_list.html:241
+#: .\templates\organization\department_list.html:266
+msgid "Close"
+msgstr ""
+
+#: .\templates\organization\department_list.html:242
+#: .\templates\organization\department_list.html:267
+msgid "Import"
+msgstr ""
+
+#: .\templates\organization\department_list.html:251
+msgid "Import Departments from Excel"
+msgstr ""

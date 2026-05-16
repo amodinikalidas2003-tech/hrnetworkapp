@@ -1,0 +1,406 @@
+{% extends "layout/layout_vertical.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Level Competency Matrix" %} - {{ post_level.name }}{% endblock title %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold py-3 mb-0">
+      <span class="text-muted fw-light"><a href="{% url 'department_list' %}">{% trans "Organization" %}</a> / </span>
+      {% trans "Level Competency Matrix" %}
+    </h4>
+    <div>
+      <a href="{% url 'department_list' %}?active_tab=levels" class="btn btn-outline-secondary waves-effect waves-light">
+        <i class="ti tabler-arrow-left me-1"></i> {% trans "Back" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Info Card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="card-title">{% trans "Organizational Level" %}: <strong>{{ post_level.name }}</strong></h6>
+      <p class="text-muted mb-0">{% trans "Configure competencies for all posts at this level." %}</p>
+    </div>
+  </div>
+
+  <!-- Competency Matrix -->
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive text-nowrap" style="max-height: 70vh;">
+        <table class="table table-bordered matrix-table mb-0">
+          <thead>
+            <tr>
+              <th class="bg-label-secondary">{% trans "Competencies / Levels" %}</th>
+              {% for level in levels %}
+                <th class="text-center bg-label-primary" data-level-id="{{ level.id }}" onclick="editLevelTitle(event, this)">{{ level.name }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for competency in competencies %}
+              <tr>
+                <td>
+                  <strong data-competency-id="{{ competency.id }}" onclick="editCompetencyTitle(event, this)">{{ competency.name }}</strong>
+                  {% if competency.description %}
+                    <small class="text-muted d-block">{{ competency.description|truncatechars:60 }}</small>
+                  {% endif %}
+                </td>
+                {% for level in levels %}
+                  <td class="text-center competency-cell p-2" 
+                      data-comp-id="{{ competency.id }}"
+                      data-level-id="{{ level.id }}"
+                      data-comp-name="{{ competency.name }}"
+                      data-level-name="{{ level.name }}"
+                      onclick="openCellEditor(this)">
+                    <div class="cell-content-placeholder">
+                      <i class="ti tabler-loader animate-spin text-muted d-none loading-icon"></i>
+                      <span class="cell-content"></span>
+                    </div>
+                  </td>
+                {% endfor %}
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="{{ levels|length|add:1 }}" class="text-center py-4">
+                  <div class="text-muted">
+                    <i class="ti tabler-alert-circle mb-2 d-block" style="font-size: 2rem;"></i>
+                    {% trans "No competencies found." %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Likert Scale Modal -->
+<div class="modal fade" id="likertScaleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Define Likert Scale" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="likertModalSubtitle" class="text-muted"></p>
+        <div id="likertFormContainer">
+          {% for i in "12345"|make_list %}
+          <div class="mb-3">
+            <label for="scaleScore{{ i }}" class="form-label fw-bold">{% trans "Score" %} {{ i }}</label>
+            <textarea id="scaleScore{{ i }}" class="form-control" rows="2" placeholder="{% trans 'Definition for score' %} {{ i }}"></textarea>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="saveLikertScaleBtn" onclick="saveLikertScale()">
+          <span class="indicator-label">{% trans "Save" %}</span>
+          <span class="indicator-progress d-none">
+            {% trans "Saving..." %} <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .competency-cell {
+    transition: all 0.2s;
+    cursor: pointer;
+    min-width: 80px;
+  }
+  .competency-cell:hover {
+    background-color: rgba(105, 108, 255, 0.08);
+  }
+  .competency-cell.active-cell {
+    background-color: rgba(40, 199, 111, 0.12);
+  }
+  .competency-cell.inactive-cell {
+    background-color: rgba(133, 146, 163, 0.08);
+  }
+  .matrix-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .matrix-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+  .matrix-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 1;
+  }
+</style>
+
+<script>
+  // Matrix data from server - keyed by "competency_id-level_id"
+  const matrixData = {{ matrix_data_json|safe }};
+  const postLevelId = "{{ post_level.id }}";
+  let currentEditingCell = null;
+  let currentCompId = null;
+  let currentLevelId = null;
+  let currentPostCompetencyId = null;
+  
+  // Initialize page
+  $(document).ready(function() {
+    updateCellUI();
+  });
+  
+  function getCellKey(compId, levelId) {
+    return compId + '-' + levelId;
+  }
+  
+  function updateCellUI() {
+    document.querySelectorAll('.competency-cell').forEach(cell => {
+      const compId = cell.dataset.compId;
+      const levelId = cell.dataset.levelId;
+      const contentSpan = cell.querySelector('.cell-content');
+      const loadingIcon = cell.querySelector('.loading-icon');
+      const compName = cell.dataset.compName;
+      const levelName = cell.dataset.levelName;
+      
+      loadingIcon.classList.add('d-none');
+      
+      const cellKey = getCellKey(compId, levelId);
+      if (matrixData[cellKey] && matrixData[cellKey].is_active) {
+        cell.classList.add('active-cell');
+        cell.classList.remove('inactive-cell');
+        contentSpan.innerHTML = `<span class="status-badge badge bg-label-success">${compName} / ${levelName}</span>`;
+      } else {
+        cell.classList.add('inactive-cell');
+        cell.classList.remove('active-cell');
+        contentSpan.innerHTML = '<span class="status-badge badge bg-label-secondary">-</span>';
+      }
+    });
+  }
+
+  function editCompetencyTitle(event, el) {
+    event.preventDefault();
+    event.stopPropagation();
+    const competencyId = el.dataset.competencyId;
+    const currentName = el.innerText.trim();
+    const newName = prompt('{% trans "Edit competency title" %}', currentName);
+    if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+    fetch("{% url 'update_competency' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ competency_id: competencyId, name: newName.trim() })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        el.innerText = data.name;
+        document.querySelectorAll(`.competency-cell[data-comp-id="${competencyId}"]`).forEach(cell => {
+          cell.dataset.compName = data.name;
+        });
+        updateCellUI();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(() => alert('An error occurred while saving.'));
+  }
+
+  function editLevelTitle(event, el) {
+    event.preventDefault();
+    event.stopPropagation();
+    const levelId = el.dataset.levelId;
+    const currentName = el.innerText.trim();
+    const newName = prompt('{% trans "Edit level title" %}', currentName);
+    if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+    fetch("{% url 'update_competency_level' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ level_id: levelId, name: newName.trim() })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        el.innerText = data.name;
+        document.querySelectorAll(`.competency-cell[data-level-id="${levelId}"]`).forEach(cell => {
+          cell.dataset.levelName = data.name;
+        });
+        updateCellUI();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(() => alert('An error occurred while saving.'));
+  }
+
+  function openCellEditor(cell) {
+    const compId = cell.dataset.compId;
+    const levelId = cell.dataset.levelId;
+    const compName = cell.dataset.compName;
+    const levelName = cell.dataset.levelName;
+    
+    currentEditingCell = cell;
+    currentCompId = compId;
+    currentLevelId = levelId;
+    
+    // Check current state
+    const cellKey = getCellKey(compId, levelId);
+    const cellData = matrixData[cellKey];
+    let isActive = true;
+    if (cellData && cellData.is_active) {
+      isActive = false;  // Toggle off
+    }
+    
+    // Show loading
+    const loadingIcon = cell.querySelector('.loading-icon');
+    const contentSpan = cell.querySelector('.cell-content');
+    loadingIcon.classList.remove('d-none');
+    contentSpan.innerHTML = '';
+    
+    // Save to server
+    const payload = {
+      post_level_id: postLevelId,
+      competency_id: compId,
+      competency_level_id: levelId,
+      is_active: isActive
+    };
+    
+    fetch("{% url 'save_post_competency' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // Update local data
+        matrixData[cellKey] = {
+          id: data.id,
+          is_active: isActive,
+          likert_scales: matrixData[cellKey]?.likert_scales || {}
+        };
+        updateCellUI();
+        
+        // If activating, open Likert scale editor
+        if (isActive) {
+          setTimeout(() => {
+            openLikertScaleEditor(compId, levelId, compName, levelName);
+          }, 200);
+        }
+      } else {
+        alert('Error: ' + data.message);
+        updateCellUI();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while saving.');
+      updateCellUI();
+    });
+  }
+  
+  function openLikertScaleEditor(compId, levelId, compName, levelName) {
+    currentCompId = compId;
+    currentLevelId = levelId;
+    const cellKey = getCellKey(compId, levelId);
+    const cellData = matrixData[cellKey];
+    currentPostCompetencyId = cellData ? cellData.id : null;
+    
+    if (!currentPostCompetencyId) {
+      alert('{% trans "Please activate this competency first." %}');
+      return;
+    }
+    
+    // Set title
+    document.getElementById('likertModalSubtitle').innerText = compName + ' - ' + levelName;
+    
+    // Load existing data
+    const likertScales = cellData.likert_scales || {};
+    for (let i = 1; i <= 5; i++) {
+      const textarea = document.getElementById(`scaleScore${i}`);
+      textarea.value = likertScales[i] || '';
+    }
+    
+    // Open Modal
+    const modal = new bootstrap.Modal(document.getElementById('likertScaleModal'));
+    modal.show();
+  }
+  
+  function saveLikertScale() {
+    if (!currentPostCompetencyId) return;
+    
+    // Collect data
+    const likertData = {};
+    for (let i = 1; i <= 5; i++) {
+      const textarea = document.getElementById(`scaleScore${i}`);
+      likertData[i] = textarea.value;
+    }
+    
+    const payload = {
+      post_competency_id: currentPostCompetencyId,
+      likert_data: likertData
+    };
+    
+    // UI Loading state
+    const btn = document.getElementById('saveLikertScaleBtn');
+    btn.disabled = true;
+    btn.querySelector('.indicator-label').classList.add('d-none');
+    btn.querySelector('.indicator-progress').classList.remove('d-none');
+    
+    fetch("{% url 'save_post_likert_scale' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // Update local data
+        const cellKey = getCellKey(currentCompId, currentLevelId);
+        if (matrixData[cellKey]) {
+          matrixData[cellKey].likert_scales = likertData;
+        }
+        bootstrap.Modal.getInstance(document.getElementById('likertScaleModal')).hide();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while saving.');
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.querySelector('.indicator-label').classList.remove('d-none');
+      btn.querySelector('.indicator-progress').classList.add('d-none');
+    });
+  }
+</script>
+
+{% endblock content %}

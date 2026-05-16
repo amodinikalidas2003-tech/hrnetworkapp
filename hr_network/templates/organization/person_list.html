@@ -1,0 +1,193 @@
+{% extends layout_path %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Persons Management" %}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold py-3 mb-0">
+      <span class="text-muted fw-light">{% trans "Organization" %} /</span> {% trans "Persons" %}
+    </h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPersonModal">
+      <i class="ti tabler-plus me-1"></i> {% trans "Add Person" %}
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive text-nowrap">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "National ID" %}</th>
+            <th>{% trans "Current Post" %}</th>
+            <th>{% trans "Contact" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody class="table-border-bottom-0">
+          {% for person in persons %}
+          <tr>
+            <td>
+              <div class="d-flex justify-content-start align-items-center">
+                <div class="avatar avatar-sm me-2">
+                  {% if person.profile_picture %}
+                    <img src="{{ person.profile_picture.url }}" alt="Avatar" class="rounded-circle" style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                  {% else %}
+                    <span class="avatar-initial rounded-circle bg-label-primary">{{ person.first_name|first }}{{ person.last_name|first }}</span>
+                  {% endif %}
+                </div>
+                <div class="d-flex flex-column">
+                  <span class="fw-medium">{{ person.first_name }} {{ person.last_name }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ person.national_id|default:"-" }}</td>
+            <td>
+              {% if person.current_post %}
+                <span class="badge bg-label-info">{{ person.current_post.title }}</span>
+              {% else %}
+                <span class="text-muted">{% trans "Unassigned" %}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if person.email %}<div><small><i class="ti tabler-mail"></i> {{ person.email }}</small></div>{% endif %}
+              {% if person.phone_number %}<div><small><i class="ti tabler-phone"></i> {{ person.phone_number }}</small></div>{% endif %}
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                <a href="{% url 'person_detail' person.pk %}" class="btn btn-text-secondary rounded-pill waves-effect btn-icon" title="{% trans 'Profile & Post History' %}">
+                  <i class="ti tabler-user icon-22px"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-text-secondary rounded-pill waves-effect btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                  <i class="ti tabler-dots-vertical icon-22px"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end m-0">
+                  <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editPersonModal{{ person.pk }}">
+                    <i class="ti tabler-pencil me-1"></i> {% trans "Edit" %}
+                  </a>
+                  {% trans "Delete this person?" as confirm_msg %}
+                  <form action="{% url 'person_delete' person.pk %}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('{{ confirm_msg }}');">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger">
+                      <i class="ti tabler-trash me-1"></i> {% trans "Delete" %}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Modal Edit Person -->
+          <div class="modal fade" id="editPersonModal{{ person.pk }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">{% trans "Edit Person" %}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{% url 'person_update' person.pk %}" method="POST" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <div class="modal-body">
+                    <div class="row g-3">
+                      <div class="col-md-12 text-center mb-3">
+                        <div class="avatar avatar-xl mx-auto mb-2">
+                          {% if person.profile_picture %}
+                            <img src="{{ person.profile_picture.url }}" alt="Avatar" class="rounded-circle" style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                          {% else %}
+                            <span class="avatar-initial rounded-circle bg-label-primary">{{ person.first_name|first }}{{ person.last_name|first }}</span>
+                          {% endif %}
+                        </div>
+                        <label class="form-label d-block">{% trans "Profile Picture" %}</label>
+                        <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{% trans "First Name" %}</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ person.first_name }}" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{% trans "Last Name" %}</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ person.last_name }}" required>
+                      </div>
+                      <div class="col-md-12">
+                        <label class="form-label">{% trans "National ID" %}</label>
+                        <input type="text" name="national_id" class="form-control" value="{{ person.national_id|default:'' }}">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{% trans "Phone Number" %}</label>
+                        <input type="text" name="phone_number" class="form-control" value="{{ person.phone_number|default:'' }}">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{% trans "Email" %}</label>
+                        <input type="email" name="email" class="form-control" value="{{ person.email|default:'' }}">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center">{% trans "No persons found." %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Person -->
+<div class="modal fade" id="addPersonModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Add Person" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'person_create' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label">{% trans "Profile Picture" %}</label>
+              {{ person_form.profile_picture }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "First Name" %}</label>
+              {{ person_form.first_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Last Name" %}</label>
+              {{ person_form.last_name }}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">{% trans "National ID" %}</label>
+              {{ person_form.national_id }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Phone Number" %}</label>
+              {{ person_form.phone_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Email" %}</label>
+              {{ person_form.email }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends layout_path %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Interview Templates" %}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold py-3 mb-0">
+      <span class="text-muted fw-light">{% trans "Interviews" %} /</span> {% trans "Templates Configuration" %}
+    </h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
+      <i class="ti tabler-plus me-1"></i> {% trans "Create Template" %}
+    </button>
+  </div>
+
+  <div class="row g-4">
+    {% for tmpl in templates %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="badge bg-label-primary">{{ tmpl.level.name }}</span>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="ti ti-dots-vertical"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="{% url 'interview_template_detail' tmpl.pk %}">{% trans "Configure Fields" %}</a>
+              </div>
+            </div>
+          </div>
+          <h5 class="card-title mb-2">{{ tmpl.title }}</h5>
+          <p class="card-text text-muted mb-3">{{ tmpl.description|truncatechars:100 }}</p>
+          <div class="d-flex align-items-center">
+            <span class="badge bg-label-secondary me-2">{{ tmpl.indicators.count }} {% trans "Competencies" %}</span>
+            <span class="text-muted small">{% trans "Updated:" %} {{ tmpl.updated_at|date:"M d, Y" }}</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-top">
+          <a href="{% url 'interview_template_detail' tmpl.pk %}" class="btn btn-label-primary w-100">{% trans "Manage Template Fields" %}</a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center text-muted py-5">
+      <p>{% trans "No interview templates found. Create one to get started." %}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal Add Template -->
+<div class="modal fade" id="addTemplateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Create Interview Template" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'interview_template_create' %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{% trans "Title" %}</label>
+            {{ form.title }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% trans "Job Level Target" %}</label>
+            {{ form.level }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% trans "Description" %}</label>
+            {{ form.description }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Save Template" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,371 @@
+{% extends layout_path %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Competency Matrix" %}{% endblock %}
+
+{% block page_css %}
+<style>
+  .matrix-table th { position: sticky; top: 0; z-index: 1; background: #fff; }
+  .matrix-table th:first-child { left: 0; z-index: 2; }
+  .matrix-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; }
+  .competency-cell { cursor: pointer; transition: all 0.2s; min-width: 150px; }
+  .competency-cell:hover { background-color: rgba(var(--bs-primary-rgb), 0.1); }
+  .competency-cell.active-cell { border: 2px solid var(--bs-primary); }
+  .competency-cell.inactive-cell { opacity: 0.5; background-color: #f8f9fa; }
+</style>
+{% endblock page_css %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold py-3 mb-0">
+      <span class="text-muted fw-light">{% trans "Assessments" %} /</span> {% trans "Competency Matrix" %}
+    </h4>
+    <div>
+      <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#addLevelModal">
+        <i class="ti tabler-layout-columns me-1"></i> {% trans "Add Level (Column)" %}
+      </button>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCompetencyModal">
+        <i class="ti tabler-layout-rows me-1"></i> {% trans "Add Competency (Row)" %}
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive text-nowrap" style="max-height: 70vh;">
+        <table class="table table-bordered matrix-table mb-0">
+          <thead>
+            <tr>
+              <th class="bg-label-secondary">{% trans "Competencies / Levels" %}</th>
+              {% for level in levels %}
+                <th class="text-center bg-label-primary">
+                  <div class="d-flex align-items-center justify-content-between gap-1">
+                    <span>{{ level.name }}</span>
+                    <button type="button" class="btn btn-sm btn-icon btn-danger p-0" style="width:20px;height:20px;min-width:20px;"
+                      data-delete-url="{% url 'delete_competency_level' pk=level.id %}"
+                      data-level-name="{{ level.name|escapejs }}"
+                      onclick="deleteLevel(event, this.dataset.deleteUrl, this.dataset.levelName)"
+                      title="{% trans 'Delete column' %}">
+                      <i class="ti tabler-x" style="font-size:11px;"></i>
+                    </button>
+                  </div>
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for comp in competencies %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-start justify-content-between gap-2">
+                    <div>
+                      <strong>{{ comp.name }}</strong>
+                      {% if comp.description %}<br><small class="text-muted text-wrap" style="max-width: 220px;">{{ comp.description }}</small>{% endif %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-icon btn-danger flex-shrink-0" style="width:22px;height:22px;min-width:22px;padding:0;"
+                      data-delete-url="{% url 'delete_competency' pk=comp.id %}"
+                      data-comp-name="{{ comp.name|escapejs }}"
+                      onclick="deleteCompetency(event, this.dataset.deleteUrl, this.dataset.compName)"
+                      title="{% trans 'Delete row' %}">
+                      <i class="ti tabler-x" style="font-size:11px;"></i>
+                    </button>
+                  </div>
+                </td>
+                {% for level in levels %}
+                  <td class="text-center competency-cell p-2" 
+                      data-comp-id="{{ comp.id }}" 
+                      data-level-id="{{ level.id }}"
+                      data-comp-name="{{ comp.name }}"
+                      data-level-name="{{ level.name }}"
+                      onclick="openCellEditor(this)">
+                    <!-- Content will be populated by JS -->
+                    <div class="cell-content-placeholder">
+                      <i class="ti tabler-loader animate-spin text-muted d-none loading-icon"></i>
+                      <span class="status-badge badge bg-label-secondary">{% trans "Configure" %}</span>
+                    </div>
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+            {% if not competencies %}
+            <tr>
+              <td colspan="{{ levels|length|add:1 }}" class="text-center py-4 text-muted">
+                {% trans "No competencies added yet." %}
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Level -->
+<div class="modal fade" id="addLevelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Add Competency Level (Column)" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{% url 'add_competency_level' %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{% trans "Level Name" %}</label>
+            {{ level_form.name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% trans "Order" %}</label>
+            {{ level_form.order }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Competency -->
+<div class="modal fade" id="addCompetencyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Add Competency (Row)" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'add_competency' %}" method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">{% trans "Competency Name" %}</label>
+            {{ competency_form.name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% trans "Description" %}</label>
+            {{ competency_form.description }}
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Save Competency" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cell Editor -->
+<div class="modal fade" id="cellEditorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% trans "Configure Indicator" %} <br>
+          <small class="text-muted" id="cellModalSubtitle"></small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="cellDataContainer">
+          <div class="mb-3">
+            <label class="form-label">{% trans "Behavioral Indicators / Definition" %}</label>
+            <textarea id="cellDefinition" class="form-control" rows="6" placeholder="{% trans 'What does this competency look like at this level?' %}"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" class="btn btn-primary" id="saveCellBtn" onclick="saveCellData()">
+          <span class="indicator-label">{% trans "Save Changes" %}</span>
+          <span class="indicator-progress d-none">
+            <i class="ti tabler-loader animate-spin me-2"></i>{% trans "Saving..." %}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block page_js %}
+<form id="csrf-form" style="display:none;">{% csrf_token %}</form>
+<script>
+  // Initial matrix data from Django view
+  const matrixData = JSON.parse('{{ matrix_data_json|escapejs }}');
+  let currentEditingCell = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize UI for all cells
+    document.querySelectorAll('.competency-cell').forEach(cell => {
+      const compId = cell.dataset.compId;
+      const levelId = cell.dataset.levelId;
+      const cellKey = `${compId}_${levelId}`;
+      const badge = cell.querySelector('.status-badge');
+      
+      // Add form-control classes to django form inputs
+      document.querySelectorAll('input[type="text"], input[type="number"], textarea, select').forEach(el => {
+        if(!el.classList.contains('form-control') && !el.classList.contains('form-select')) {
+          if(el.tagName === 'SELECT') el.classList.add('form-select');
+          else el.classList.add('form-control');
+        }
+      });
+      
+      if (matrixData[cellKey]) {
+        const data = matrixData[cellKey];
+        if (data.is_active) {
+          cell.classList.add('active-cell');
+          badge.className = 'status-badge badge bg-label-success';
+          badge.innerHTML = '<i class="ti tabler-check me-1"></i> {% trans "Configured" %}';
+        } else {
+          cell.classList.add('inactive-cell');
+          badge.className = 'status-badge badge bg-label-secondary';
+          badge.innerText = '{% trans "Inactive" %}';
+        }
+      } else {
+        // Not explicitly saved yet (defaults to what we choose, let's say "Empty")
+        badge.className = 'status-badge badge bg-label-warning';
+        badge.innerText = '{% trans "Empty" %}';
+      }
+    });
+
+  });
+
+  function openCellEditor(cellElement) {
+    currentEditingCell = cellElement;
+    const compId = cellElement.dataset.compId;
+    const levelId = cellElement.dataset.levelId;
+    const compName = cellElement.dataset.compName;
+    const levelName = cellElement.dataset.levelName;
+    const cellKey = `${compId}_${levelId}`;
+    
+    // Set titles
+    document.getElementById('cellModalSubtitle').innerText = `${compName} — ${levelName}`;
+    
+    // Load Data
+    const defInput = document.getElementById('cellDefinition');
+
+    if (matrixData[cellKey]) {
+      const cell = matrixData[cellKey];
+      defInput.value = cell.data.definition || '';
+    } else {
+      // Defaults
+      defInput.value = '';
+    }
+
+    // Open Modal
+    const modal = new bootstrap.Modal(document.getElementById('cellEditorModal'));
+    modal.show();
+  }
+
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+
+  function deleteLevel(event, deleteUrl, levelName) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!confirm(`{% trans "Are you sure you want to delete column" %} "${levelName}"?\n{% trans "All indicator data in this column will be permanently deleted." %}`)) return;
+    fetch(deleteUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') { location.reload(); }
+      else { alert('Error: ' + data.message); }
+    });
+  }
+
+  function deleteCompetency(event, deleteUrl, compName) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!confirm(`{% trans "Are you sure you want to delete row" %} "${compName}"?\n{% trans "All indicator data in this row will be permanently deleted." %}`)) return;
+    fetch(deleteUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') { location.reload(); }
+      else { alert('Error: ' + data.message); }
+    });
+  }
+
+  function saveCellData() {
+    if (!currentEditingCell) return;
+    
+    const compId = currentEditingCell.dataset.compId;
+    const levelId = currentEditingCell.dataset.levelId;
+    const cellKey = `${compId}_${levelId}`;
+    
+    const definition = document.getElementById('cellDefinition').value;
+
+    const payload = {
+      competency_id: compId,
+      level_id: levelId,
+      is_active: true,
+      data: {
+        definition: definition
+      }
+    };
+    
+    // UI Loading state
+    const btn = document.getElementById('saveCellBtn');
+    btn.disabled = true;
+    btn.querySelector('.indicator-label').classList.add('d-none');
+    btn.querySelector('.indicator-progress').classList.remove('d-none');
+    
+    const saveUrl = "{% url 'save_competency_cell' %}";
+    
+    fetch(saveUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if(data.status === 'success') {
+        // Update local matrixData
+        matrixData[cellKey] = {
+          id: data.id,
+          is_active: true,
+          data: payload.data
+        };
+
+        // Update Cell UI
+        const badge = currentEditingCell.querySelector('.status-badge');
+        currentEditingCell.classList.remove('active-cell', 'inactive-cell');
+        currentEditingCell.classList.add('active-cell');
+        badge.className = 'status-badge badge bg-label-success';
+        badge.innerHTML = '<i class="ti tabler-check me-1"></i> {% trans "Configured" %}';
+        
+        bootstrap.Modal.getInstance(document.getElementById('cellEditorModal')).hide();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while saving.');
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.querySelector('.indicator-label').classList.remove('d-none');
+      btn.querySelector('.indicator-progress').classList.add('d-none');
+    });
+  }
+</script>
+{% endblock page_js %}

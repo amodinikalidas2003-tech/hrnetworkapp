@@ -1,0 +1,152 @@
+{% extends layout_path %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% if object %}ویرایش جلسه{% else %}جلسه جدید{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold py-3 mb-0">
+            <span class="text-muted fw-light">مصاحبه‌ها /</span> 
+            {% if object %}ویرایش{% else %}ایجاد{% endif %}
+        </h4>
+        <a href="{% url 'interview_list' %}" class="btn btn-outline-secondary">
+            <i class="ti ti-arrow-left me-1"></i>
+            بازگشت
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">اطلاعات جلسه مصاحبه</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="interviewForm">
+                        {% csrf_token %}
+                        
+                        {# عنوان جلسه #}
+                        <div class="mb-3">
+                            <label class="form-label">عنوان جلسه</label>
+                            {{ form.title }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">تاریخ مصاحبه</label>
+                                {{ form.date }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">یادداشت‌ها</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-device-floppy me-1"></i>
+                                {% if object %}ذخیره تغییرات{% else %}ایجاد مصاحبه{% endif %}
+                            </button>
+                            <a href="{% url 'interview_list' %}" class="btn btn-outline-secondary">انصراف</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">راهنما</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="ti ti-info-circle me-1"></i>
+                        <strong>نکته مهم:</strong>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="ti ti-check text-success me-1"></i>
+                            فرد مصاحبه‌شونده کسی است که از او سوال می‌پرسیم
+                        </li>
+                        <li class="mb-2">
+                            <i class="ti ti-check text-success me-1"></i>
+                            فرد ارزیابی‌شونده کسی است که درباره‌اش ارزیابی می‌دهیم
+                        </li>
+                        <li class="mb-2">
+                            <i class="ti ti-check text-success me-1"></i>
+                            ماتریس شایستگی بر اساس سطح پست انتخابی نمایش داده می‌شود
+                        </li>
+                        <li>
+                            <i class="ti ti-check text-success me-1"></i>
+                            می‌توانید افراد جدید را مستقیماً در این فرم ثبت کنید
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr-jalali/flatpickr-jalali.min.css' %}">
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/flatpickr-jalali/flatpickr-jalali.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr-jalali/fa.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Persian Date Picker for date field
+        const dateInput = document.getElementById('{{ form.date.id_for_label }}');
+        if (dateInput) {
+            // Create a visible input for display
+            const dateInputView = document.createElement('input');
+            dateInputView.type = 'text';
+            dateInputView.className = 'form-control';
+            dateInputView.placeholder = 'yyyy/mm/dd';
+            dateInputView.id = 'date_view';
+            dateInputView.readOnly = true;
+
+            // Hide original input but keep it for form submission
+            dateInput.type = 'hidden';
+
+            // Insert visible input after hidden input
+            dateInput.parentNode.insertBefore(dateInputView, dateInput.nextSibling);
+
+            // Initialize flatpickr
+            flatpickr('#date_view', {
+                locale: 'fa',
+                dateFormat: "Y/m/d",
+                altInput: false,
+                onChange: function(selectedDates, dateStr, instance) {
+                    // Convert Persian date to Gregorian for submission
+                    if (selectedDates[0]) {
+                        const gregorianDate = selectedDates[0].toISOString().split('T')[0];
+                        dateInput.value = gregorianDate;
+                    }
+                }
+            });
+
+            // If there's an existing value, show it in Persian
+            if (dateInput.value) {
+                const existingDate = new Date(dateInput.value);
+                if (!isNaN(existingDate)) {
+                    // Format for display in Persian
+                    const fp = flatpickr('#date_view');
+                    fp.setDate(existingDate);
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

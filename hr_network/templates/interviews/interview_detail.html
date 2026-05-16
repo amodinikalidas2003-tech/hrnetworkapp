@@ -1,0 +1,265 @@
+{% extends layout_path %}
+{% load i18n %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}جزئیات مصاحبه - {{ interview.title }}{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+    {# Header #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold py-3 mb-0">
+            <span class="text-muted fw-light">مصاحبه‌ها /</span> {{ interview.title }}
+        </h4>
+        <div>
+            <a href="{% url 'interview_list' %}" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-1"></i> بازگشت
+            </a>
+        </div>
+    </div>
+
+    {# Interview Info Cards #}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="avatar avatar-sm bg-label-primary me-3">
+                            <i class="ti ti-users"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">تاریخ مصاحبه</small>
+                            <span class="fw-semibold">{{ interview.date|date:"Y/m/d"|default:"-" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="avatar avatar-sm bg-label-success me-3">
+                            <i class="ti ti-users"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">شرکت‌کنندگان</small>
+                            <span class="fw-semibold">{{ participants.count }} نفر</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="avatar avatar-sm bg-label-info me-3">
+                            <i class="ti ti-user-check"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">ارزیابی‌شوندگان</small>
+                            <span class="fw-semibold">{{ evaluated_persons_data|length }} نفر</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="avatar avatar-sm 
+                            {% if interview.status == 'completed' %}bg-label-success
+                            {% elif interview.status == 'in_progress' %}bg-label-warning
+                            {% else %}bg-label-secondary{% endif %} me-3">
+                            <i class="ti ti-checklist"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">وضعیت</small>
+                            <span class="fw-semibold">
+                                {% if interview.status == 'completed' %}تکمیل شده
+                                {% elif interview.status == 'in_progress' %}در حال انجام
+                                {% else %}پیش‌نویس{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {# Participants Section (Interviewers) #}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="ti ti-users me-1"></i> شرکت‌کنندگان (مصاحبه‌کنندگان)
+                    </h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addParticipantModal">
+                        <i class="ti ti-plus me-1"></i> افزودن
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if participants %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>نام</th>
+                                    <th>پست</th>
+                                    <th>وضعیت</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participant in participants %}
+                                <tr>
+                                    <td>{{ participant.interviewer }}</td>
+                                    <td>{{ participant.interviewer_post.title|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge {% if participant.status == 'completed' %}bg-success{% elif participant.status == 'in_progress' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ participant.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-danger">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12l2 2l4 -4"/><path d="M21 12a9 9 0 1 1 -18 0a9 9 0 0 1 18 0z"/></svg>
+                        <p>هنوز شرکت‌کننده‌ای اضافه نشده است</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Evaluated Persons Section (Third-party people being evaluated) #}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="ti ti-user-check me-1"></i> افراد ارزیابی‌شونده
+                    </h5>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEvaluatedPersonModal">
+                        <i class="ti ti-plus me-1"></i> افزودن فرد
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if evaluated_persons_data %}
+                    <div class="list-group">
+                        {% for person_id, data in evaluated_persons_data.items %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ data.person }}</h6>
+                                <small class="text-muted">
+                                    {{ data.post.title|default:"-" }} 
+                                    {% if data.post_level %}
+                                    ({{ data.post_level.name }})
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <a href="{% url 'evaluate_person' interview.pk person_id %}" class="btn btn-sm btn-primary">
+                                <i class="ti ti-edit me-1"></i> ارزیابی
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
+                        <p>هنوز فرد ارزیابی‌شونده‌ای اضافه نشده است</p>
+                        <small class="text-muted">افراد ارزیابی‌شونده، اشخاص ثالثی هستند که مصاحبه‌کنندگان درباره آنها ارزیابی می‌دهند</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Notes Section #}
+    {% if interview.notes %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">یادداشت‌های کلی</h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-0">{{ interview.notes|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{# Add Participant Modal #}
+<div class="modal fade" id="addParticipantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">افزودن شرکت‌کننده</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <form method="post" action="{% url 'add_participant' interview.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">انتخاب فرد</label>
+                        {{ participant_form.interviewer }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">پست</label>
+                        {{ participant_form.interviewer_post }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">بستن</button>
+                    <button type="submit" class="btn btn-primary">افزودن</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# Add Evaluated Person Modal #}
+<div class="modal fade" id="addEvaluatedPersonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">افزودن فرد ارزیابی‌شونده</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <form method="post" action="{% url 'add_evaluated_person' interview.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">انتخاب فرد</label>
+                        <select name="evaluated_person" class="form-select select2" required>
+                            <option value="">انتخاب کنید...</option>
+                            {% for person in all_persons %}
+                            <option value="{{ person.pk }}">{{ person }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="ti ti-info-circle me-1"></i>
+                        این فرد، شخص ثالثی است که مصاحبه‌کنندگان درباره او ارزیابی می‌دهند.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">بستن</button>
+                    <button type="submit" class="btn btn-primary">افزودن</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

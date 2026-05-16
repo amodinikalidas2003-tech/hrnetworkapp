@@ -1,0 +1,396 @@
+{% extends "layout/layout_vertical.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Post Competency Matrix" %} - {{ post.title }}{% endblock title %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4">
+    <span class="text-muted fw-light">{% trans "Assessments" %} /</span> {% trans "Post Competency Matrix" %}
+  </h4>
+  
+  <!-- Post Info Card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="card-title mb-1">{{ post.title }}</h5>
+          <p class="text-muted mb-0">
+            {% if post.competency_level %}
+              <span class="badge bg-label-primary">{{ post.competency_level.name }}</span>
+            {% endif %}
+            {% if post.department %}
+              <span class="badge bg-label-secondary">{{ post.department.name }}</span>
+            {% endif %}
+          </p>
+        </div>
+        <a href="{% url 'department_list' %}" class="btn btn-label-secondary">
+          <i class="ti tabler-arrow-left me-1"></i> {% trans "Back to Posts" %}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Competency Matrix -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{% trans "Configure Competencies for this Post" %}</h5>
+      <div class="text-muted small">
+        <span class="me-3"><i class="ti tabler-circle-check text-success me-1"></i>{% trans "Active" %}</span>
+        <span><i class="ti tabler-circle-x text-danger me-1"></i>{% trans "Inactive" %}</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive text-nowrap" style="max-height: 70vh;">
+        <table class="table table-bordered matrix-table mb-0">
+          <thead>
+            <tr>
+              <th class="bg-label-secondary">{% trans "Competencies / Levels" %}</th>
+              {% for level in levels %}
+                <th class="text-center bg-label-primary">{{ level.name }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for competency in competencies %}
+            <tr>
+              <td>
+                <strong>{{ competency.name }}</strong>
+                {% if competency.description %}
+                  <small class="text-muted d-block">{{ competency.description|truncatechars:60 }}</small>
+                {% endif %}
+              </td>
+              {% for level in levels %}
+                <td class="text-center competency-cell p-2" 
+                    data-comp-id="{{ competency.id }}"
+                    data-level-id="{{ level.id }}"
+                    data-comp-name="{{ competency.name }}"
+                    data-level-name="{{ level.name }}"
+                    onclick="openCellEditor(this)">
+                  <div class="cell-content-placeholder">
+                    <i class="ti tabler-loader animate-spin text-muted d-none loading-icon"></i>
+                    <span class="cell-content"></span>
+                  </div>
+                </td>
+              {% endfor %}
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="{{ levels|length|add:1 }}" class="text-center py-4">
+                <div class="text-muted">
+                  <i class="ti tabler-alert-circle mb-2 d-block" style="font-size: 2rem;"></i>
+                  {% trans "No competencies found." %}
+                </div>
+                <a href="{% url 'competency_matrix' %}" class="btn btn-primary mt-2">
+                  <i class="ti tabler-plus me-1"></i>{% trans "Add Competencies" %}
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Likert Scale Editor Modal -->
+<div class="modal fade" id="likertScaleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% trans "Define Likert Scale" %}
+          <br><small class="text-muted" id="likertModalSubtitle"></small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">{% trans "Define what each score (1-5) means for this competency at this post level:" %}</p>
+        
+        <div class="row g-3">
+          <!-- Score 5 - Excellent -->
+          <div class="col-12">
+            <label class="form-label d-flex align-items-center">
+              <span class="badge bg-success me-2 fs-6">5</span>
+              <span>{% trans "Excellent" %}</span>
+            </label>
+            <textarea id="scaleScore5" class="form-control" rows="2" placeholder="{% trans 'What does excellent performance look like?' %}"></textarea>
+          </div>
+          
+          <!-- Score 4 - Good -->
+          <div class="col-12">
+            <label class="form-label d-flex align-items-center">
+              <span class="badge bg-label-success me-2 fs-6">4</span>
+              <span>{% trans "Good" %}</span>
+            </label>
+            <textarea id="scaleScore4" class="form-control" rows="2" placeholder="{% trans 'What does good performance look like?' %}"></textarea>
+          </div>
+          
+          <!-- Score 3 - Average -->
+          <div class="col-12">
+            <label class="form-label d-flex align-items-center">
+              <span class="badge bg-label-primary me-2 fs-6">3</span>
+              <span>{% trans "Average" %}</span>
+            </label>
+            <textarea id="scaleScore3" class="form-control" rows="2" placeholder="{% trans 'What does average performance look like?' %}"></textarea>
+          </div>
+          
+          <!-- Score 2 - Below Average -->
+          <div class="col-12">
+            <label class="form-label d-flex align-items-center">
+              <span class="badge bg-label-warning me-2 fs-6">2</span>
+              <span>{% trans "Below Average" %}</span>
+            </label>
+            <textarea id="scaleScore2" class="form-control" rows="2" placeholder="{% trans 'What does below average performance look like?' %}"></textarea>
+          </div>
+          
+          <!-- Score 1 - Poor -->
+          <div class="col-12">
+            <label class="form-label d-flex align-items-center">
+              <span class="badge bg-label-danger me-2 fs-6">1</span>
+              <span>{% trans "Poor" %}</span>
+            </label>
+            <textarea id="scaleScore1" class="form-control" rows="2" placeholder="{% trans 'What does poor performance look like?' %}"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="saveLikertScaleBtn" onclick="saveLikertScale()">
+          <span class="indicator-label">{% trans "Save Definitions" %}</span>
+          <span class="indicator-progress d-none">
+            <i class="ti tabler-loader animate-spin me-2"></i>{% trans "Saving..." %}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+  // Matrix data from server (keyed by "competencyId_levelId")
+  const matrixData = {{ matrix_data_json|safe }};
+  const postId = "{{ post.id }}";
+  let currentEditingCell = null;
+  let currentPostCompetencyId = null;
+  
+  // Initialize page
+  $(document).ready(function() {
+    // Update UI based on saved data
+    updateCellUI();
+  });
+  
+  function getCellKey(compId, levelId) {
+    return `${compId}_${levelId}`;
+  }
+  
+  function updateCellUI() {
+    document.querySelectorAll('.competency-cell').forEach(cell => {
+      const compId = cell.dataset.compId;
+      const levelId = cell.dataset.levelId;
+      const key = getCellKey(compId, levelId);
+      const contentSpan = cell.querySelector('.cell-content');
+      const loadingIcon = cell.querySelector('.loading-icon');
+      
+      loadingIcon.classList.add('d-none');
+      
+      if (matrixData[key] && matrixData[key].is_active) {
+        cell.classList.add('active-cell');
+        cell.classList.remove('inactive-cell');
+        contentSpan.innerHTML = '<i class="ti tabler-check text-success"></i>';
+      } else {
+        cell.classList.add('inactive-cell');
+        cell.classList.remove('active-cell');
+        contentSpan.innerHTML = '<i class="ti tabler-x text-danger"></i>';
+      }
+    });
+  }
+  
+  function openCellEditor(cell) {
+    const compId = cell.dataset.compId;
+    const levelId = cell.dataset.levelId;
+    const compName = cell.dataset.compName;
+    const levelName = cell.dataset.levelName;
+    const key = getCellKey(compId, levelId);
+    
+    const postCompData = matrixData[key];
+    currentPostCompetencyId = postCompData ? postCompData.id : null;
+    
+    // If no data exists, toggle it active first
+    if (!postCompData) {
+      toggleCellActive(compId, levelId);
+      return;
+    }
+    
+    currentEditingCell = { compId, levelId, compName, levelName };
+    
+    // Set title
+    document.getElementById('likertModalSubtitle').innerText = `${compName} - ${levelName} - {{ post.title }}`;
+    
+    // Load existing data
+    const likertScales = postCompData.likert_scales || {};
+    for (let i = 1; i <= 5; i++) {
+      const textarea = document.getElementById(`scaleScore${i}`);
+      textarea.value = likertScales[i] || '';
+    }
+    
+    // Open Modal
+    const modal = new bootstrap.Modal(document.getElementById('likertScaleModal'));
+    modal.show();
+  }
+  
+  function toggleCellActive(compId, levelId) {
+    const key = getCellKey(compId, levelId);
+    const cell = document.querySelector(`.competency-cell[data-comp-id="${compId}"][data-level-id="${levelId}"]`);
+    const loadingIcon = cell.querySelector('.loading-icon');
+    const contentSpan = cell.querySelector('.cell-content');
+    
+    // Determine current state (if exists and active, toggle off, else toggle on)
+    let isActive = true;
+    if (matrixData[key] && matrixData[key].is_active) {
+      isActive = false;
+    }
+    
+    // Show loading
+    loadingIcon.classList.remove('d-none');
+    contentSpan.innerHTML = '';
+    
+    const payload = {
+      post_id: postId,
+      competency_id: compId,
+      level_id: levelId,
+      is_active: isActive
+    };
+    
+    fetch("{% url 'save_post_competency' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        matrixData[key] = {
+          id: data.id,
+          is_active: isActive,
+          likert_scales: matrixData[key]?.likert_scales || {}
+        };
+        updateCellUI();
+        
+        // If we just activated it, open the editor
+        if (isActive) {
+          const compName = cell.dataset.compName;
+          const levelName = cell.dataset.levelName;
+          currentEditingCell = { compId, levelId, compName, levelName };
+          currentPostCompetencyId = data.id;
+          
+          document.getElementById('likertModalSubtitle').innerText = `${compName} - ${levelName} - {{ post.title }}`;
+          const modal = new bootstrap.Modal(document.getElementById('likertScaleModal'));
+          modal.show();
+        }
+      } else {
+        alert('Error: ' + data.message);
+        updateCellUI();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while saving.');
+      updateCellUI();
+    });
+  }
+  
+  function saveLikertScale() {
+    if (!currentPostCompetencyId || !currentEditingCell) return;
+    
+    // Collect data
+    const likertData = {};
+    for (let i = 1; i <= 5; i++) {
+      const textarea = document.getElementById(`scaleScore${i}`);
+      likertData[i] = textarea.value;
+    }
+    
+    const payload = {
+      post_competency_id: currentPostCompetencyId,
+      likert_data: likertData
+    };
+    
+    // UI Loading state
+    const btn = document.getElementById('saveLikertScaleBtn');
+    btn.disabled = true;
+    btn.querySelector('.indicator-label').classList.add('d-none');
+    btn.querySelector('.indicator-progress').classList.remove('d-none');
+    
+    fetch("{% url 'save_post_likert_scale' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // Update local data using cell key
+        const key = getCellKey(currentEditingCell.compId, currentEditingCell.levelId);
+        matrixData[key].likert_scales = likertData;
+        bootstrap.Modal.getInstance(document.getElementById('likertScaleModal')).hide();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while saving.');
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.querySelector('.indicator-label').classList.remove('d-none');
+      btn.querySelector('.indicator-progress').classList.add('d-none');
+    });
+  }
+</script>
+
+<style>
+  .competency-cell {
+    transition: all 0.2s;
+    cursor: pointer;
+    min-width: 80px;
+  }
+  .competency-cell:hover {
+    background-color: rgba(105, 108, 255, 0.08);
+  }
+  .competency-cell.active-cell {
+    background-color: rgba(40, 199, 111, 0.12);
+  }
+  .competency-cell.inactive-cell {
+    background-color: rgba(133, 146, 163, 0.08);
+  }
+  .matrix-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .matrix-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+  .matrix-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 1;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends layout_path %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}لیست مصاحبه‌ها{% endblock %}
+
+{% block content %}
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold py-3 mb-0">
+            <span class="text-muted fw-light">مصاحبه‌ها /</span> لیست جلسات
+        </h4>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createInterviewModal">
+            <i class="ti ti-plus me-1"></i>
+            ایجاد مصاحبه جدید
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">لیست جلسات مصاحبه</h5>
+        </div>
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>عنوان</th>
+                        <th>تعداد شرکت‌کنندگان</th>
+                        <th>تاریخ</th>
+                        <th>وضعیت</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for interview in interviews %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'interview_detail' interview.pk %}" class="fw-semibold">
+                                {{ interview.title }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-label-info">{{ interview.get_participants_count }} نفر</span>
+                        </td>
+                        <td>{{ interview.date|default:"---"|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if interview.status == 'completed' %}
+                                <span class="badge bg-success">تکمیل شده</span>
+                            {% elif interview.status == 'in_progress' %}
+                                <span class="badge bg-warning">در حال انجام</span>
+                            {% else %}
+                                <span class="badge bg-secondary">برنامه‌ریزی شده</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                    <i class="ti ti-dots-vertical"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{% url 'interview_detail' interview.pk %}">
+                                        <i class="ti ti-eye me-1"></i> مشاهده و ارزیابی
+                                    </a>
+                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editInterviewModal" data-interview-id="{{ interview.pk }}" data-title="{{ interview.title }}" data-date="{{ interview.date|date:'Y-m-d' }}" data-notes="{{ interview.notes }}">
+                                        <i class="ti ti-edit me-1"></i> ویرایش
+                                    </button>
+                                    <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteInterviewModal" data-interview-id="{{ interview.pk }}" data-title="{{ interview.title }}">
+                                        <i class="ti ti-trash me-1"></i> حذف
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
+                            <div>هیچ مصاحبه‌ای ثبت نشده است</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Interview Modal -->
+<div class="modal fade" id="createInterviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ایجاد جلسه مصاحبه جدید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <form method="post" action="{% url 'interview_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">مصاحبه شونده (ارزیابی کننده)</label>
+                            {{ form.interviewer }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">عنوان جلسه</label>
+                            {{ form.title }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تاریخ مصاحبه</label>
+                            {{ form.date }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">یادداشت‌ها</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">بستن</button>
+                    <button type="submit" class="btn btn-primary">ایجاد مصاحبه</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Interview Modal -->
+<div class="modal fade" id="editInterviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ویرایش جلسه مصاحبه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <form method="post" id="editInterviewForm" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">عنوان جلسه</label>
+                            <input type="text" name="title" id="edit_title" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تاریخ مصاحبه</label>
+                            <input type="text" name="date" id="edit_date_view" class="form-control" placeholder="yyyy/mm/dd" readonly>
+                            <input type="hidden" name="date" id="edit_date">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">یادداشت‌ها</label>
+                            <textarea name="notes" id="edit_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">بستن</button>
+                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Interview Modal -->
+<div class="modal fade" id="deleteInterviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="ti ti-alert-triangle me-1"></i>
+                    تأیید حذف
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <form method="post" id="deleteInterviewForm" action="">
+                {% csrf_token %}
+                <div class="modal-body text-center">
+                    <div class="mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                    </div>
+                    <h5>آیا از حذف این جلسه مصاحبه اطمینان دارید؟</h5>
+                    <p class="text-muted mt-2">
+                        <strong id="deleteInterviewTitle"></strong>
+                    </p>
+                    <div class="alert alert-warning">
+                        <i class="ti ti-info-circle me-1"></i>
+                        این عمل غیرقابل بازگشت است و تمام پاسخ‌های ثبت شده حذف خواهند شد.
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-danger waves-effect waves-light">
+                        <i class="ti ti-trash me-1"></i> حذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Persian Date Picker (flatpickr-jalali) -->
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr-jalali/flatpickr-jalali.min.css' %}">
+<script src="{% static 'vendor/libs/flatpickr-jalali/flatpickr-jalali.min.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr-jalali/fa.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create interview date picker
+        const dateInput = document.getElementById('id_date');
+        if (dateInput) {
+            const dateInputView = document.createElement('input');
+            dateInputView.type = 'text';
+            dateInputView.className = 'form-control';
+            dateInputView.placeholder = 'yyyy/mm/dd';
+            dateInputView.id = 'date_view';
+            dateInputView.readOnly = true;
+            dateInput.type = 'hidden';
+            dateInput.parentNode.insertBefore(dateInputView, dateInput.nextSibling);
+
+            flatpickr('#date_view', {
+                locale: 'fa',
+                dateFormat: "Y/m/d",
+                altInput: false,
+                onChange: function(selectedDates) {
+                    if (selectedDates[0]) {
+                        const gregorianDate = selectedDates[0].toISOString().split('T')[0];
+                        dateInput.value = gregorianDate;
+                    }
+                }
+            });
+        }
+
+        // Edit interview modal handler
+        const editModal = document.getElementById('editInterviewModal');
+        if (editModal) {
+            let editDatePicker = null;
+
+            editModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const interviewId = button.getAttribute('data-interview-id');
+                const title = button.getAttribute('data-title');
+                const date = button.getAttribute('data-date');
+                const notes = button.getAttribute('data-notes');
+
+                // Set form action
+                const form = document.getElementById('editInterviewForm');
+                form.action = '/interviews/' + interviewId + '/update/';
+
+                // Populate fields
+                document.getElementById('edit_title').value = title;
+                document.getElementById('edit_notes').value = notes || '';
+
+                // Initialize or update date picker
+                const editDateInput = document.getElementById('edit_date');
+                const editDateView = document.getElementById('edit_date_view');
+
+                if (editDatePicker) {
+                    editDatePicker.destroy();
+                }
+
+                editDatePicker = flatpickr('#edit_date_view', {
+                    locale: 'fa',
+                    dateFormat: "Y/m/d",
+                    altInput: false,
+                    defaultDate: date || null,
+                    onChange: function(selectedDates) {
+                        if (selectedDates[0]) {
+                            editDateInput.value = selectedDates[0].toISOString().split('T')[0];
+                        }
+                    }
+                });
+
+                if (date) {
+                    editDateInput.value = date;
+                }
+            });
+        }
+
+        // Delete interview modal handler
+        const deleteModal = document.getElementById('deleteInterviewModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const interviewId = button.getAttribute('data-interview-id');
+                const title = button.getAttribute('data-title');
+
+                // Set form action
+                const form = document.getElementById('deleteInterviewForm');
+                form.action = '/interviews/' + interviewId + '/delete/';
+
+                // Populate title
+                document.getElementById('deleteInterviewTitle').textContent = title;
+            });
+        }
+    });
+</script>
+{% endblock %}
